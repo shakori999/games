@@ -1,0 +1,11 @@
+{
+    "launch": {
+    
+    
+        "configurations": [],
+        "compounds": []
+    },
+    "workbench.settings.useSplitJSON": true,
+    "workbench.settings.editor": "ui",
+    "vim.enableNeovim": false,
+}
