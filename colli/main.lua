@@ -13,6 +13,7 @@ end
 function love.update(dt)
     player:update(dt)
     wall:update(dt)
+    player:resolveCollision(wall)
 end
 
 function love.draw()
