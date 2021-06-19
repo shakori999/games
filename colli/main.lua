@@ -8,17 +8,44 @@ function love.load()
     require "box"
 
     player = Player(100, 100)
-    wall = Wall(200, 100)
     box = Box(400, 150)
 
     objects = {}
     table.insert(objects, player)
-    table.insert(objects, wall)
     table.insert(objects, box)
+
+    walls = {}
+
+    map = {
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1},
+        {1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1},
+        {1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1},
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+    }
+
+    for i, v in ipairs(map) do 
+        for j, w in ipairs(v) do
+            if w == 1 then
+                table.insert(walls, Wall ((j - 1 ) * 50, (i - 1) * 50))
+            end
+        end
+    end
 end
 
 function love.update(dt)
     for i, v in ipairs(objects) do
+        v:update(dt)
+    end
+
+    for i, v in ipairs(walls) do
         v:update(dt)
     end
 
@@ -37,10 +64,9 @@ function love.update(dt)
         end
         
     -- Go through all the objects (except the last)
-        for i = 1, #objects - 1 do
-            -- Go through all the objects starting from the position i + 1
-            for j = i + 1 , # objects do
-                local collision =  objects[i]:resolveCollision(objects[j])
+        for i, wall in ipairs(walls) do
+            for j, object in ipairs(objects) do
+                local collision =  object:resolveCollision(wall)
                 if collision then
                     loop = true
                 end
@@ -51,6 +77,10 @@ end
 function love.draw()
     -- Draw all the objects
     for i, v in ipairs(objects) do
+        v:draw()
+    end
+
+    for i, v in ipairs(walls) do
         v:draw()
     end
 end
