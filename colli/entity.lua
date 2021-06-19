@@ -81,6 +81,10 @@ function Entity:resolveCollision(e)
                 -- Pushback = the bottom side of the player - the top side of the wall
                 local pushback = self.y + self.height - e.y
                 self.y = self.y - pushback
+                -- we're touching a wall from the bottom
+                -- This means we're standing on the ground
+                -- Reset the grabity
+                self.gravity = 0
             else
                 --Pushback = the bottom side of the wall - the top side of the player
                 local pushback = e.y + e.height - self.y
