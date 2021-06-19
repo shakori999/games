@@ -59,7 +59,6 @@ end
 
 function Entity:resolveCollision(e)
     if self.tempstrength > e.tempstrength then
-        -- We need to return the value
         return e:resolveCollision(self)
     end
 
@@ -67,19 +66,32 @@ function Entity:resolveCollision(e)
         self.tempstrength = e.tempstrength
         if self:wasVerticallyAligned(e) then
             if self.x + self.width / 2 < e.x + e.width / 2 then
-                -- Pushback = the right side of the player - the left side of the wall
-                self:collide(e, "right")
+                -- Call checkresolve for both parties
+                local a = self:checkresolve(e, "right")
+                local b = e:checkresolve(self, "left")
+                if a and b then
+                    self:collide(e, "right")
+                end
             else
-                -- Pushback = the right side of the wall - the left side of the player
-                self:collide(e, "left")
+                local a = self:checkresolve(e, "right")
+                local b = e:checkresolve(self, "left")
+                if a and b then
+                    self:collide(e, "left")
+                end
             end
         elseif self:wasHorizontallyAlligned(e) then
             if self.y + self.height / 2 < e.y + e.height / 2 then
-                -- Pushback = the bottom side of the player - the top side of the wall
-                self:collide(e, "bottom")
+                local a = self:checkresolve(e, "bottom")
+                local b = e:checkresolve(self, "top")
+                if a and b then
+                    self:collide(e, "bottom")
+                end
             else
-                --Pushback = the bottom side of the wall - the top side of the player
-                self:collide(e, "top")
+                local a = self:checkresolve(e, "bottom")
+                local b = e:checkresolve(self, "top")
+                if a and b then
+                    self:collide(e, "top")
+                end
             end
         end
         -- There was collision! After we've resolved the collision return true
@@ -106,4 +118,8 @@ function Entity:collide(e, direction)
         local pushback = e.y + e.height - self.y
         self.y = self.y + pushback
     end
+end
+
+function Entity:checkresolve(e, direction)
+    return true
 end

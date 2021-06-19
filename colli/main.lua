@@ -62,8 +62,16 @@ function love.update(dt)
             -- Break it because we're probably stuck in an endless loop.
             break
         end
-        
-    -- Go through all the objects (except the last)
+
+        for i = 1, #objects - 1 do
+            for j = i + 1, #objects do
+                local collision = objects[i]:resolveCollision(objects[j])
+                if collision then
+                    loop = true
+                end
+            end
+        end
+
         for i, wall in ipairs(walls) do
             for j, object in ipairs(objects) do
                 local collision =  object:resolveCollision(wall)

@@ -36,3 +36,14 @@ function Player:collide(e, direction)
         self.canjump = true
     end
 end
+
+function Player:checkresolve(e, direction)
+    if e:is(Box) then
+        if direction == "bottom" then
+            return true
+        else
+            return false
+        end
+    end
+    return true
+end
