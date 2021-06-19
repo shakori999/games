@@ -16,6 +16,9 @@ function Entity:new(x, y, image_path)
     -- Temp means temporary
     self.tempstrength = 0
 
+    -- Add the gravity and weight properties
+    self.gravity = 0
+    self.weight = 400
 end
 
 function Entity:update(dt)
@@ -23,6 +26,12 @@ function Entity:update(dt)
     self.last.y = self.y
 
     self.tempstrength = self.strength
+
+    -- Increase the gravity using the weight
+    self.gravity = self.gravity + self.weight * dt
+
+    -- Increase the y-position
+    self.y = self.y + self.gravity * dt
 end
 
 function Entity:draw()

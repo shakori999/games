@@ -16,5 +16,5 @@ function Player:update(dt)
     end
 
     -- Remove the if-statment
-    self.y = self.y + 200 * dt
+    -- Remove the vertical movement
 end
