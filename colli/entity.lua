@@ -13,13 +13,16 @@ function Entity:new(x, y, image_path)
 
     -- Defualt value to the variable
     self.strength = 0
+    -- Temp means temporary
+    self.tempstrength = 0
 
 end
 
 function Entity:update(dt)
-    -- We'll leave this empty for now.
     self.last.x = self.x
     self.last.y = self.y
+
+    self.tempstrength = self.strength
 end
 
 function Entity:draw()
@@ -45,13 +48,16 @@ end
 
 
 function Entity:resolveCollision(e)
-    if self.strength > e.strength then
+    if self.tempstrength > e.tempstrength then
         e:resolveCollision(self)
         -- Return because we don't want to continue this function
         return
     end
 
     if self:checkCollision(e) then
+
+        self.tempstrength = e.tempstrength
+
         if self:wasVerticallyAligned(e) then
             if self.x + self.width / 2 < e.x + e.width / 2 then
                 -- Pushback = the right side of the player - the left side of the wall
