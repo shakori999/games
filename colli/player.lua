@@ -17,8 +17,10 @@ function Player:update(dt)
         self.x = self.x + 200 * dt
     end
 
-    -- Remove the if-statment
-    -- Remove the vertical movement
+    if self.last.y ~= self.y then
+        self.canjump = false
+    end
+
 end
 
 function Player:jump()
