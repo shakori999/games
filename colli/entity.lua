@@ -49,9 +49,8 @@ end
 
 function Entity:resolveCollision(e)
     if self.tempstrength > e.tempstrength then
-        e:resolveCollision(self)
-        -- Return because we don't want to continue this function
-        return
+        -- We need to return the value
+        return e:resolveCollision(self)
     end
 
     if self:checkCollision(e) then
@@ -79,5 +78,10 @@ function Entity:resolveCollision(e)
                 self.y = self.y + pushback
             end
         end
+        -- There was collision! After we've resolved the collision return true
+        return true
     end
+    -- There was no collision, return false
+    -- if you don't return anything is still fine bc return's value of nothing is nil
+    return false
 end
