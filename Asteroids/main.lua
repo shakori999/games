@@ -17,9 +17,12 @@ love.update = function(dt)
     local turnSpeed = 10
     if love.keyboard.isDown('right') then
         shipAngle = shipAngle + turnSpeed * dt
-    elseif love.keyboard.isDown('left') then
+    end
+
+    if love.keyboard.isDown('left') then
         shipAngle = shipAngle - turnSpeed * dt
     end
+
     shipAngle = shipAngle % (2 * math.pi)
 
     if love.keyboard.isDown('up') then
@@ -29,15 +32,24 @@ love.update = function(dt)
         shipSpeedX = shipSpeedX - math.cos(shipAngle) * speed * dt
         shipspeedY = shipspeedY - math.sin(shipAngle) * speed * dt
     end
+
     shipX = (shipX + shipSpeedX * dt) % arenaWidth
     shipY = (shipY + shipspeedY * dt) % arenaHeight
 
-    for bulletIndex, bullet in ipairs(bullets) do
-        local bulletspeed = 500
-        bullet.x = (bullet.x + math.cos(bullet.angle) * bulletspeed * dt) % arenaWidth
-        bullet.y = (bullet.y + math.sin(bullet.angle) * bulletspeed * dt) % arenaWidth
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletspeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletspeed * dt) % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletspeed * dt) % arenaWidth
+        end
     end
-        
+    
 end
 
 love.draw = function()
@@ -70,6 +82,7 @@ love.keypressed = function(key)
             x = shipX + math.cos(shipAngle) * shipRadius ,
             y = shipY + math.sin(shipAngle) * shipRadius,
             angle = shipAngle,
+            timeLeft = 4,
         })
     end
 end
