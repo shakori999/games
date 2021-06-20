@@ -2,6 +2,9 @@ love.load = function()
     shipX = 800 / 2
     shipY = 600 / 2
     shipAngle = 0
+    shipSpeedX = 0
+    shipspeedY = 0
+    speed = 100
 
 end
 
@@ -13,6 +16,17 @@ love.update = function(dt)
         shipAngle = shipAngle - turnSpeed * dt
     end
     shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * speed * dt
+        shipspeedY = shipspeedY + math.sin(shipAngle) * speed * dt
+    elseif love.keyboard.isDown('down') then
+        shipSpeedX = shipSpeedX - math.cos(shipAngle) * speed * dt
+        shipspeedY = shipspeedY - math.sin(shipAngle) * speed * dt
+    end
+
+    shipX = shipX + shipSpeedX * dt
+    shipY = shipY + shipspeedY * dt
 end
 
 love.draw = function()
