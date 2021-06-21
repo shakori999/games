@@ -11,6 +11,21 @@ love.load = function()
     speed = 100
 
     bullets = {}
+
+    asteroids = {
+        {
+            x = 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth - 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth / 2,
+            y = arenaHeight - 100,
+        },
+    }
 end
 
 love.update = function(dt)
@@ -72,6 +87,11 @@ love.draw = function()
                 love.graphics.setColor(0, 1, 0)
                 love.graphics.circle('fill', bullet.x, bullet.y, 5)
             end
+            
+            for asteroidsIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y , 80)
+            end
         end
     end
 end
@@ -82,7 +102,7 @@ love.keypressed = function(key)
             x = shipX + math.cos(shipAngle) * shipRadius ,
             y = shipY + math.sin(shipAngle) * shipRadius,
             angle = shipAngle,
-            timeLeft = 4,
+            timeLeft = 2,
         })
     end
 end
