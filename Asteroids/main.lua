@@ -47,6 +47,7 @@ love.load = function()
     }
     for asteroidsIndex, asteroid in ipairs(asteroids) do
         asteroid.angle = love.math.random() * (2  * math.pi)
+        
     end
 
     bulletRadius = 5
