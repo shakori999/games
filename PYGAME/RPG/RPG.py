@@ -40,6 +40,15 @@ run_ani_L = [
     pygame.image.load("BG/playerGrey_walk1.png"),
 ]
 
+#Attack animation for the Right
+attack_ani_r = [
+    pygame.image.load("BG/playerGrey_walk1.png"),
+    pygame.image.load("BG/playerGrey_walk2.png"),
+    pygame.image.load("BG/playerGrey_walk3.png"),
+    pygame.image.load("BG/playerGrey_switch2.png"),
+    pygame.image.load("BG/playerGrey_switch1.png"),
+
+]
 
 class Background(pygame.sprite.Sprite):
     def __init__(self):
@@ -77,6 +86,10 @@ class Player(pygame.sprite.Sprite):
         self.jumping = False
         self.running = False
         self.move_frame = 0
+
+        #combat
+        self.attacking = False
+        self.attack_frame = 0
 
     def move(self):
         
@@ -136,7 +149,17 @@ class Player(pygame.sprite.Sprite):
             
 
     def attack(self):
-        pass
+        #If attack frame has reached end of sequence, return to 0
+        if self.attack_frame > 4:
+            self.attack_frame = 0
+            self.attacking = False
+        
+        #Check direction for correct animation to display
+        if self.direction == "RIGHT":
+            self.image = attack_ani_r[self.attack_frame]
+        
+        #Update the current attack frame
+        self.attack_frame += 1
 
     def jump(self):
         self.rect.x += 1
@@ -190,9 +213,16 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 player1.jump()
+            if event.key == pygame.K_RETURN:
+                if player1.attacking == False:
+                    player1.attack()
+                    player1.attacking = True
         
     #Player related functions
     player1.update()
+    if player1.attacking == True:
+        player1.attack()
+
     player1.move()
     player1.gravity_check()
 
