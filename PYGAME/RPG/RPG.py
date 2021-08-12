@@ -34,8 +34,8 @@ class Background(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("BG/ground.png")
-        self.rect = self.image.get_rect(center = (350, 150))
+        self.image = pygame.image.load("BG/bgtrue.png")
+        self.rect = self.image.get_rect(center = (350, 317))
     def render(self):
         screen.blit(self.image, (self.rect.x, self.rect.y))
 
@@ -43,18 +43,24 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("BG/playerGrey_walk1.png")
-        self.rect = self.image.get_rect(center = (350, 150))
+        self.rect = self.image.get_rect()
 
         #position and direction
         self.vx = 0
         self.pos = vec((340, 240))
         self.vel = vec(0,0)
         self.acc = vec(0,0)
-        self.direction = "Right"
-    def render(self):
-        screen.blit(self.image, (self.pos.x, self.pos.y))
+        self.direction = "RIGHT"
+
+        #Movement
+        self.jumping = False
 
     def move(self):
+        
+        #keep a constant acceleration of 0.5 in the downwa
+        self.acc = vec(0, 0.5)
+
+        #Will set running to False if the player has slower
         if abs(self.vel.x) > 0.3:
             self.running = True
         else:
@@ -68,7 +74,7 @@ class Player(pygame.sprite.Sprite):
             self.acc.x = -acc
         if pressed_key[K_RIGHT]:
             self.acc.x = acc
-
+        
         #Formulas to calculate velocity while accounting the friction
         self.acc.x += self.vel.x * fric 
         self.vel += self.acc
@@ -79,7 +85,8 @@ class Player(pygame.sprite.Sprite):
             self.pos.x = 0
         if self.pos.x < 0:
             self.pos.x = w
-        self.rect.midbottom = self.pos
+
+        self.rect.topleft = self.pos
     
     def update(self):
         pass
@@ -88,8 +95,26 @@ class Player(pygame.sprite.Sprite):
         pass
 
     def jump(self):
-        pass
+        self.rect.x += 1
 
+        hits = pygame.sprite.spritecollide(self , ground_group, False)
+
+        self.rect.x -= 1
+
+        if hits and not self.jumping:
+            self.jumping = True
+            self.vel.y = -12
+
+    
+    def gravity_check(self):
+        hits = pygame.sprite.spritecollide(player1, ground_group, False)
+        if self.vel.y > 0:
+            if hits:
+                lowest = hits[0]
+                if self.pos.y < lowest.rect.bottom:
+                    self.pos.y = lowest.rect.top - self.rect.height + 1
+                    self.vel.y = 0
+                    self.jumping = False
         
 
 class Enemy(pygame.sprite.Sprite):
@@ -98,6 +123,9 @@ class Enemy(pygame.sprite.Sprite):
 
 background = Background()
 ground = Ground()
+ground_group = pygame.sprite.Group()
+ground_group.add(ground)
+
 player1 = Player()
 
 while True:
@@ -108,11 +136,15 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN:
             pass
         if event.type == pygame.KEYDOWN:
-            pass
+            if event.key == pygame.K_SPACE:
+                player1.jump()
         
     background.render()
     ground.render()
     player1.move()
-    player1.render() 
+    screen.blit(player1.image, player1.rect)
+
+    player1.gravity_check()
+
     pygame.display.update()
     fps_clock.tick(fps)
