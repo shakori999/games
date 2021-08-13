@@ -188,6 +188,40 @@ class Player(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
+        self.image = pygame.image.load("BG/enemyWalking_1.png")
+        self.rect = self.image.get_rect()
+        self.pos = vec(0.0)
+        self.vel = vec(0.0)
+
+        #movment 
+        self.direction = random.randint(0,1)
+        self.vel.x = random.randint(2, 6)/ 2
+
+        #Initial position 
+        if self.direction == 0:
+            self.pos.x = 0
+            self.pos.y = 242
+        if self.direction == 1:
+            self.pos.x = 700
+            self.pos.y = 242
+
+    def move(self):
+        if self.pos.x >= (w - 20):
+            self.direction = 1
+        elif self.pos.x <= 0:
+            self.direction = 0
+        
+        #Update
+        if self.direction == 0:
+            self.pos.x += self.vel.x
+        if self.direction == 1:
+            self.pos.x -= self.vel.x
+        
+        self.rect.center = self.pos
+
+    def render(self):
+        screen.blit(self.image, (self.pos.x, self.pos.y))
+
 
 background = Background()
 
@@ -197,6 +231,8 @@ ground_group.add(ground)
 
 player1 = Player()
 player_groupd = pygame.sprite.Group()
+
+enemy1 = Enemy()
 
 while True:
     for event in pygame.event.get():
@@ -226,13 +262,16 @@ while True:
     player1.move()
     player1.gravity_check()
 
+    #Enemy related functions
+    enemy1.move()
 
     #Display and Background related functions
     background.render()
     ground.render()
 
-    #Rendering Player
+    #Rendering Player and enemies
     screen.blit(player1.image, player1.rect)
+    enemy1.render()
 
     pygame.display.update()
     fps_clock.tick(fps)
