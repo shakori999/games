@@ -51,6 +51,16 @@ attack_ani_r = [
     pygame.image.load("BG/playerGrey_switch1.png"),
 ]
 
+#Health bar animation
+health_ani = [
+    pygame.image.load("BG/Helath_10.png"),
+    pygame.image.load("BG/Helath_20.png"),
+    pygame.image.load("BG/Helath_40.png"),
+    pygame.image.load("BG/Helath_60.png"),
+    pygame.image.load("BG/Helath_80.png"),
+    pygame.image.load("BG/Helath_100.png"),
+]
+
 class Background(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -73,7 +83,8 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("BG/playerGrey_stand.png")
-        self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect( )
+
 
         #position and direction
         self.vx = 0
@@ -91,6 +102,9 @@ class Player(pygame.sprite.Sprite):
         self.attacking = False
         self.attack_frame = 0
         self.cooldown = False
+
+        #bars
+        self.health = 5
 
     def move(self):
         
@@ -190,7 +204,13 @@ class Player(pygame.sprite.Sprite):
             self.cooldown = True
             pygame.time.set_timer(hit_cooldown, 1000)
 
-            print("hit")
+            self.health = self.health - 1
+            health.image = health_ani[self.health]
+
+            if self.health <=0:
+                self.kill()
+                pygame.display.update()
+
             pygame.display.update()
 
 class Enemy(pygame.sprite.Sprite):
@@ -234,7 +254,6 @@ class Enemy(pygame.sprite.Sprite):
       # Activates upon either of the two expressions being true
       if hits and player1.attacking == True:
             self.kill()
-            print("Enemy killed")
  
       # If collision has occured and player not attacking, call "hit" function            
       elif hits and player1.attacking == False:
@@ -257,7 +276,6 @@ class Castle(pygame.sprite.Sprite):
         if self.hide == False:
             screen.blit(self.image, (450, 90))
 
-
 class EventHandler():
     def __init__(self):
         self.enemy_count = 0
@@ -268,7 +286,6 @@ class EventHandler():
         self.stage_enemies = []
         for x in range(1, 21):
             self.stage_enemies.append(int((x **2/2) + 1))
-            print(self.stage_enemies)
 
     def stage_handler(self):
         self.root = Tk() 
@@ -305,7 +322,15 @@ class EventHandler():
         print("stage: " + str(self.stage))
         pygame.time.set_timer(self.enemy_generation, 1500 - (50 * self.stage))
 
-    
+class HealthBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load("BG/Helath_100.png")
+        self.image = pygame.transform.scale(self.image, (250, 40))
+
+    def render(self):
+        screen.blit(self.image, (10, 10))
+ 
         
 background = Background()
 
@@ -322,6 +347,9 @@ Enemies = pygame.sprite.Group()
 #castle
 castle = Castle()
 handler = EventHandler()
+
+#Bars
+health = HealthBar()
 
 while True:
     for event in pygame.event.get():
@@ -380,7 +408,9 @@ while True:
         entity.render()
 
     #Rendering Player and enemies
-    screen.blit(player1.image, player1.rect)
+    if player1.health > 0:
+        screen.blit(player1.image, player1.rect)
+    health.render()
 
     pygame.display.update()
     fps_clock.tick(fps)
