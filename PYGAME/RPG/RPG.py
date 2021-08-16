@@ -17,38 +17,54 @@ fps = 60
 fps_clock = pygame.time.Clock()
 count = 0
 hit_cooldown = pygame.USEREVENT + 1
+font = pygame.font.Font(None, 50)
+font1 = pygame.font.Font(None, 20)
+
 
 #the main screen and the caption varibals
 screen = pygame.display.set_mode((w, h))
 pygame.display.set_caption("RPG")
 
+#colors
+color_dark = (100, 100, 100)
+color_light = (170, 170, 170)
+color_white = (255, 255, 255)
+
 #the animation for the charecter from Right
 run_ani_R = [
-    pygame.image.load("BG/playerGrey_stand.png"),
-    pygame.image.load("BG/playerGrey_walk1.png"),
-    pygame.image.load("BG/playerGrey_walk2.png"),
-    pygame.image.load("BG/playerGrey_walk3.png"),
-    pygame.image.load("BG/playerGrey_walk2.png"),
-    pygame.image.load("BG/playerGrey_walk1.png"),
+    pygame.image.load("BG/WalkR/playerGrey_stand.png"),
+    pygame.image.load("BG/WalkR/playerGrey_walk1.png"),
+    pygame.image.load("BG/WalkR/playerGrey_walk2.png"),
+    pygame.image.load("BG/WalkR/playerGrey_walk3.png"),
+    pygame.image.load("BG/WalkR/playerGrey_walk2.png"),
+    pygame.image.load("BG/WalkR/playerGrey_walk1.png"),
 ]
 
 #the animation for the charecter from Left 
 run_ani_L = [
-    pygame.image.load("BG/playerGrey_stand.png"),
-    pygame.image.load("BG/playerGrey_walk1.png"),
-    pygame.image.load("BG/playerGrey_walk2.png"),
-    pygame.image.load("BG/playerGrey_walk3.png"),
-    pygame.image.load("BG/playerGrey_walk2.png"),
-    pygame.image.load("BG/playerGrey_walk1.png"),
+    pygame.image.load("BG/WalkL/playerGrey_stand.png"),
+    pygame.image.load("BG/WalkL/Walk_L1.png"),
+    pygame.image.load("BG/WalkL/Walk_L2.png"),
+    pygame.image.load("BG/WalkL/Walk_L3.png"),
+    pygame.image.load("BG/WalkL/Walk_L2.png"),
+    pygame.image.load("BG/WalkL/Walk_L1.png"),
 ]
 
 #Attack animation for the Right
 attack_ani_r = [
-    pygame.image.load("BG/playerGrey_walk1.png"),
-    pygame.image.load("BG/playerGrey_walk2.png"),
-    pygame.image.load("BG/playerGrey_walk3.png"),
-    pygame.image.load("BG/playerGrey_switch2.png"),
-    pygame.image.load("BG/playerGrey_switch1.png"),
+    pygame.image.load("BG/Attack_Right/playerGrey_walk1.png"),
+    pygame.image.load("BG/Attack_Right/playerGrey_walk2.png"),
+    pygame.image.load("BG/Attack_Right/playerGrey_walk3.png"),
+    pygame.image.load("BG/Attack_Right/playerGrey_switch2.png"),
+    pygame.image.load("BG/Attack_Right/playerGrey_switch1.png"),
+]
+
+attack_ani_l = [
+    pygame.image.load("BG/Attack_Left/Walk_L1.png"),
+    pygame.image.load("BG/Attack_Left/Walk_L2.png"),
+    pygame.image.load("BG/Attack_Left/Walk_L3.png"),
+    pygame.image.load("BG/Attack_Left/Attack_L1.png"),
+    pygame.image.load("BG/Attack_Left/Attack_L2.png"),
 ]
 
 #Health bar animation
@@ -102,9 +118,12 @@ class Player(pygame.sprite.Sprite):
         self.attacking = False
         self.attack_frame = 0
         self.cooldown = False
+        
 
         #bars
         self.health = 5
+        self.experiance = 0
+        self.mana = 0
 
     def move(self):
         
@@ -155,7 +174,7 @@ class Player(pygame.sprite.Sprite):
             self.move_frame += 1
         
         #Returns to base frame if standing still and incorrect frame not showing
-        if abs(self.vel.x) < 0.2 and self.move_frame != 0:
+        if abs(self.vel.x) < 0.3 and self.move_frame != 0:
             self.move_frame = 0
             if self.direction == "RIGHT":
                 self.image = run_ani_R[self.move_frame]
@@ -172,6 +191,9 @@ class Player(pygame.sprite.Sprite):
         #Check direction for correct animation to display
         if self.direction == "RIGHT":
             self.image = attack_ani_r[self.attack_frame]
+        if self.direction == "LEFT":
+            self.correction()
+            self.image = attack_ani_l[self.attack_frame]
         
         #Update the current attack frame
         self.attack_frame += 1
@@ -213,6 +235,12 @@ class Player(pygame.sprite.Sprite):
 
             pygame.display.update()
 
+    def correction(self):
+        if self.attack_frame == 1:
+            self.pos.x -= 20
+        if self.attack_frame == 4:
+            self.pos.x += 20 
+
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -224,6 +252,7 @@ class Enemy(pygame.sprite.Sprite):
         #movement 
         self.direction = random.randint(0,1) 
         self.vel.x = random.randint(2,6) / 2
+        self.mana = random.randint(1,3)
 
         # Sets the intial position of the enemy
         if self.direction == 0:
@@ -232,6 +261,9 @@ class Enemy(pygame.sprite.Sprite):
         if self.direction == 1:
             self.pos.x = 500
             self.pos.y = 240
+
+        #combat
+        self.rand_num = random.uniform(0, 100)
 
     def move(self):
         # Causes the enemy to change directions upon reaching the end of screen    
@@ -249,14 +281,31 @@ class Enemy(pygame.sprite.Sprite):
 
     def update(self):
       # Checks for collision with the Player
-      hits = pygame.sprite.spritecollide(self, player_groupd, False)
+        hits = pygame.sprite.spritecollide(self, player_groupd, False)
  
       # Activates upon either of the two expressions being true
-      if hits and player1.attacking == True:
+        if hits and player1.attacking == True:
             self.kill()
+            if player1.mana < 100: player1.mana += self.mana
+            player1.experiance += 1
+
+            item_no = 0
+            if self.rand_num >= 0 and self.rand_num <=5:
+                item_no = 1
+            elif self.rand_num > 5 and self.rand_num <= 15:
+                item_no = 2 
+            
+            if item_no !=0:
+                item = Item(item_no)
+                items.add(item)
+
+                item.posx = self.pos.x
+                item.posy = self.pos.y
+
+            handler.dead_enemy_count += 1
  
       # If collision has occured and player not attacking, call "hit" function            
-      elif hits and player1.attacking == False:
+        elif hits and player1.attacking == False:
             player1.player_hit()
 
 
@@ -282,6 +331,7 @@ class EventHandler():
         self.stage = 1
         self.battle = False
         self.enemy_generation = pygame.USEREVENT + 2
+        self.dead_enemy_count = 0
 
         self.stage_enemies = []
         for x in range(1, 21):
@@ -321,6 +371,13 @@ class EventHandler():
         self.enemy_count = 0
         print("stage: " + str(self.stage))
         pygame.time.set_timer(self.enemy_generation, 1500 - (50 * self.stage))
+        self.dead_enemy_count = 0
+
+    def update(self):
+        if self.dead_enemy_count == self.stage_enemies[self.stage - 1]:
+            self.dead_enemy_count = 0
+            stage_display.clear = True
+            stage_display.stage_clear()
 
 class HealthBar(pygame.sprite.Sprite):
     def __init__(self):
@@ -331,7 +388,82 @@ class HealthBar(pygame.sprite.Sprite):
     def render(self):
         screen.blit(self.image, (10, 10))
  
-        
+class StageDisplay(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.text = font.render("stage: " + str(handler.stage), True, color_dark) 
+        self.rect = self.text.get_rect()
+        self.posx = -100
+        self.posy = 100
+        self.display = False        
+        self.clear = False
+
+    def stage_clear(self):
+        self.text = font.render("Stage Clear!", True, color_dark)
+        if self.posx < 720:
+            self.posx += 3
+            screen.blit(self.text, (self.posx, self.posy))
+        else:
+            self.clear = False
+            self.posx = -100
+            self.posy = 100
+    
+    def move_display(self):
+        self.text = font.render("stage: " + str(handler.stage), True, color_dark)
+        if self.posx < 700:
+            self.posx += 3
+            screen.blit(self.text, (self.posx, self.posy))
+        else:
+            self.display = False
+            self.posx = -100
+            self.posy = 100 
+
+class StatusBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.surf = pygame.Surface((90, 66))
+        self.rect = self.surf.get_rect(center= (500, 10))
+
+    def update_draw(self):
+        #Create the test to be displayed
+        text1 = font1.render("Stage: " + str(handler.stage), True, color_white)
+        text2 = font1.render("EXP: " + str(player1.experiance), True, color_white)
+        text3 = font1.render("MANA: " + str(player1.mana), True, color_white)
+        text4 = font1.render("FPS: " + str(int(fps_clock.get_fps())), True, color_white)
+
+        #Draw the text to the status bar
+        screen.blit(text1, (585, 7))
+        screen.blit(text2, (585, 22))
+        screen.blit(text3, (585, 37))
+        screen.blit(text4, (585, 52))
+
+
+class Item(pygame.sprite.Sprite):
+    def __init__(self, itemtype):
+        super().__init__()
+        if itemtype == 1: self.image = pygame.image.load("BG/heart pixel art 32x32.png")
+        elif itemtype == 2: self.image = pygame.image.load("BG/Coin.png")
+        self.rect = self.image.get_rect()
+        self.type = itemtype
+        self.posx = 0
+        self.posy = 0
+
+    def render(self):
+        self.rect.x = self.posx
+        self.rect.y = self.posy
+        screen.blit(self.image, self.rect)
+
+    def update(self):
+        hits = pygame.sprite.spritecollide(self, player_groupd, False)
+        if hits:
+            if player1.health < 5 and self.type == 1:
+                player1.health += 1
+                health.image = health_ani[player1.health]
+                self.kill()
+            if self.type == 2:
+                self.kill()
+
+
 background = Background()
 
 ground = Ground()
@@ -350,6 +482,12 @@ handler = EventHandler()
 
 #Bars
 health = HealthBar()
+
+#stage info
+stage_display = StageDisplay()
+status_bar = StatusBar()
+
+items = pygame.sprite.Group()
 
 while True:
     for event in pygame.event.get():
@@ -385,7 +523,8 @@ while True:
                 handler.stage_handler()
             if event.key == pygame.K_n:
                 if handler.battle == True and len(Enemies) == 0:
-                    print("work")
+                    stage_display = StageDisplay()
+                    stage_display.display = True
                     handler.next_stage()
         
     #Player related functions
@@ -407,10 +546,27 @@ while True:
         entity.move()
         entity.render()
 
+    #items
+    for item in items:
+        item.render()
+        item.update()
+
+    #render stage display
+
+    if stage_display.display == True:
+        stage_display.move_display()
+    if stage_display.clear == True:
+        stage_display.stage_clear()
+
     #Rendering Player and enemies
     if player1.health > 0:
         screen.blit(player1.image, player1.rect)
     health.render()
+    screen.blit(status_bar.surf, (580, 5))
+    status_bar.update_draw()
+    handler.update()
+
+
 
     pygame.display.update()
     fps_clock.tick(fps)
