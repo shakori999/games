@@ -1,6 +1,7 @@
 import sys, random, time
 import tkinter
 import pygame
+from pygame import cursors
 from pygame.locals import *
 from tkinter import filedialog
 from tkinter import *
@@ -118,6 +119,7 @@ class Player(pygame.sprite.Sprite):
         self.attacking = False
         self.attack_frame = 0
         self.cooldown = False
+        self.magic_cooldown = 1
         
 
         #bars
@@ -126,6 +128,7 @@ class Player(pygame.sprite.Sprite):
         self.mana = 0
 
     def move(self):
+        if cursor.wait == 1: return
         
         #keep a constant acceleration of 0.5 in the downwa
         self.acc = vec(0, 0.5)
@@ -159,6 +162,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.topleft = self.pos # Update rect with new pos
     
     def update(self):
+        if cursor.wait == 1: return
         #Return to base frame if at end of movement sequence
         if self.move_frame > 5:
             self.move_frame = 0
@@ -183,6 +187,7 @@ class Player(pygame.sprite.Sprite):
             
 
     def attack(self):
+        if cursor.wait == 1: return
         #If attack frame has reached end of sequence, return to 0
         if self.attack_frame > 4:
             self.attack_frame = 0
@@ -222,6 +227,7 @@ class Player(pygame.sprite.Sprite):
                     self.jumping = False
     
     def player_hit(self):
+        if cursor.wait == 1: return
         if self.cooldown == False:
             self.cooldown = True
             pygame.time.set_timer(hit_cooldown, 1000)
@@ -266,6 +272,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rand_num = random.uniform(0, 100)
 
     def move(self):
+        if cursor.wait == 1: return
         # Causes the enemy to change directions upon reaching the end of screen    
         if self.pos.x >= (w - 20):
                 self.direction = 1
@@ -279,12 +286,15 @@ class Enemy(pygame.sprite.Sprite):
         
         self.rect.center = self.pos # Updates rect
 
+
     def update(self):
       # Checks for collision with the Player
         hits = pygame.sprite.spritecollide(self, player_groupd, False)
- 
+
+        f_hits = pygame.sprite.spritecollide(self, Fireballs, False)
+
       # Activates upon either of the two expressions being true
-        if hits and player1.attacking == True:
+        if hits and player1.attacking == True or f_hits:
             self.kill()
             if player1.mana < 100: player1.mana += self.mana
             player1.experiance += 1
@@ -313,6 +323,114 @@ class Enemy(pygame.sprite.Sprite):
             # Displayed the enemy on screen
             screen.blit(self.image, (self.pos.x, self.pos.y))
         
+class Enemy2(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.pos = vec(0,0)
+        self.vel = vec(0,0)
+        self.wait = 0
+        self.wait_status = False
+        self.turning = 0 
+
+        self.direction = random.randint(0,1)
+        self.vel.x = random.randint(2, 6)
+        self.mana = random.randint(2,3)
+
+        if self.direction == 0:self.image = pygame.image.load("BG/enemyWalking_1.png")
+        if self.direction == 1:self.image = pygame.image.load("BG/enemyWalking_1.png")
+        self.rect = self.image.get_rect()
+
+        #sets the initial position of the enemy
+        if self.direction == 0:
+            self.pos.x = 0
+            self.pos.y = 250
+        if self.direction == 1:
+            self.pos.x = 700
+            self.pos.y = 250
+
+    def move(self):
+        if cursor.wait == 1: return  
+        if self.turning == 1:
+            self.turn()
+            return
+
+        if self.pos.x >= (w - 20):
+            self.direction = 1
+        elif self.pos.x <= 0:
+            self.direction = 0
+
+        #Update
+        if self.wait > 60:
+            self.wait_status = True
+        elif int(self.wait) <= 0:
+            self.wait_status = False
+        
+        if(self.direction_check()):
+            self.turn()
+            self.wait = 90
+            self.turning = 1
+
+        if self.wait_status == True:
+            self.wait -= 1
+        elif self.direction == 0:
+            self.pos.x += self.vel.x
+            self.wait += self.vel.x
+        elif self.direction == 1:
+            self.pos.x -= self.vel.x
+            self.wait += self.vel.x
+        self.rect.topleft = self.pos
+
+    def update(self):
+      # Checks for collision with the Player
+        hits = pygame.sprite.spritecollide(self, player_groupd, False)
+
+        f_hits = pygame.sprite.spritecollide(self, Fireballs, False)
+
+      # Activates upon either of the two expressions being true
+        if hits and player1.attacking == True or f_hits:
+            self.kill()
+            if player1.mana < 100: player1.mana += self.mana
+            player1.experiance += 1
+
+            rand_num = random.uniform(0,100)
+            item_no = 0
+            if rand_num >= 0 and rand_num <=5:
+                item_no = 1
+            elif rand_num > 5 and rand_num <= 15:
+                item_no = 2 
+            
+            if item_no !=0:
+                item = Item(item_no)
+                items.add(item)
+
+                item.posx = self.pos.x
+                item.posy = self.pos.y
+
+            handler.dead_enemy_count += 1
+
+    def render(self):
+        screen.blit(self.image, self.rect)
+
+    def direction_check(self):
+        if (player1.pos.x - self.pos.x < 0 and self.direction == 0):
+            return 1
+        elif (player1.pos.x - self.pos.x > 0 and self.direction == 1):
+            return 1
+        else:
+            return 0
+
+    def turn(self):
+        if self.wait > 0:
+            self.wait -= 1
+            return
+        elif int(self.wait) <= 0:
+            self.turning = 0
+        
+        if (self.direction):
+            self.direction = 0
+        else:
+            self.direction = 1
+
 class Castle(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -332,6 +450,8 @@ class EventHandler():
         self.battle = False
         self.enemy_generation = pygame.USEREVENT + 2
         self.dead_enemy_count = 0
+        self.enemy_generation2 = pygame.USEREVENT + 3
+        self.world = 0
 
         self.stage_enemies = []
         for x in range(1, 21):
@@ -357,27 +477,60 @@ class EventHandler():
     def world1(self):
         self.root.destroy()
         pygame.time.set_timer(self.enemy_generation, 2000)
+        button.imgdisp = 1
         castle.hide = True
         self.battle = True
 
     def world2(self):
+        self.root.destroy()
+        background.bg_image = pygame.image.load("BG/desert.jpg")
+        ground.image = pygame.image.load("BG/desert_ground.png")
+
+        pygame.time.set_timer(self.enemy_generation2, 2500)
+        self.world = 2
+        button.imgdisp = 1
+        castle.hide = True
         self.battle = True
 
     def world3(self):
         self.battle = True
 
     def next_stage(self):
+        button.imgdisp = 1
         self.stage += 1
+
         self.enemy_count = 0
-        print("stage: " + str(self.stage))
-        pygame.time.set_timer(self.enemy_generation, 1500 - (50 * self.stage))
         self.dead_enemy_count = 0
+        if self.world == 1:
+            pygame.time.set_timer(self.enemy_generation, 1500 - (50 * self.stage))
+        elif self.world == 2:
+            pygame.time.set_timer(self.enemy_generation2, 1500 - (50 * self.stage))
+            
 
     def update(self):
         if self.dead_enemy_count == self.stage_enemies[self.stage - 1]:
             self.dead_enemy_count = 0
             stage_display.clear = True
             stage_display.stage_clear()
+
+    def home(self):
+        pygame.time.set_timer(self.enemy_generation, 0)
+        pygame.time.set_timer(self.enemy_generation2, 0)
+
+        self.battle = False
+        self.enemy_count = 0
+        self.dead_enemy_count = 0
+        self.stage = 1
+        self.world = 0
+
+        #Destroy any enemies
+        for group in Enemies, items:
+            for entity in group:
+                entity.kill()
+
+        castle.hide = False
+        background.bg_image = pygame.image.load("BG/sky.png")
+        ground.image = pygame.image.load("BG/bgtrue.png")
 
 class HealthBar(pygame.sprite.Sprite):
     def __init__(self):
@@ -400,6 +553,7 @@ class StageDisplay(pygame.sprite.Sprite):
 
     def stage_clear(self):
         self.text = font.render("Stage Clear!", True, color_dark)
+        button.imgdisp = 0
         if self.posx < 720:
             self.posx += 3
             screen.blit(self.text, (self.posx, self.posy))
@@ -437,7 +591,6 @@ class StatusBar(pygame.sprite.Sprite):
         screen.blit(text3, (585, 37))
         screen.blit(text4, (585, 52))
 
-
 class Item(pygame.sprite.Sprite):
     def __init__(self, itemtype):
         super().__init__()
@@ -463,6 +616,79 @@ class Item(pygame.sprite.Sprite):
             if self.type == 2:
                 self.kill()
 
+class PButton(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.vec = vec(620, 300)
+        self.imgdisp = 0
+
+    def render(self, num):
+        if (num == 0):
+            self.image = pygame.image.load("BG/HomeButton.png")
+            self.image = pygame.transform.scale(self.image, (50, 50))
+        elif num == 1:
+            if cursor.wait == 0:
+                self.image = pygame.image.load("BG/PauseButton.png")
+                self.image = pygame.transform.scale(self.image, (50, 50))
+            else:
+                self.image = pygame.image.load("BG/PlayButton.png")
+                self.image = pygame.transform.scale(self.image, (50, 50))
+
+        screen.blit(self.image, self.vec)
+
+class Cursor(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load("BG/dwarven_gauntlet.png")
+        self.rect = self.image.get_rect()
+        self.wait = 0
+
+    def pause(self):
+        if self.wait == 1:
+            self.wait = 0
+        else:
+            self.wait = 1
+
+    def hover(self):
+        if 620 <= mouse[0] <= 670 and 300 <= mouse[1] <=345:
+            pygame.mouse.set_visible(False)
+            self.rect.center = pygame.mouse.get_pos()
+            screen.blit(self.image, self.rect)
+
+        else:
+            pygame.mouse.set_visible(True)
+
+class FireBall(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.direction = player1.direction
+        if self.direction == "RIGHT":
+            self.image = pygame.image.load("BG/Fireball1.png")
+        else:
+            self.image = pygame.image.load("BG/fireball_L.png")
+        self.rect = self.image.get_rect(center = player1.pos)
+        self.rect.x = player1.pos.x
+        self.rect.y = player1.pos.y
+
+    def fire(self):
+        player1.magic_cooldown = 0
+        if -10 < self.rect.x < 710:
+            if self.direction == "RIGHT":
+                self.image = pygame.image.load("BG/Fireball1.png")
+                self.image = pygame.transform.scale(self.image, (55, 55))
+                screen.blit(self.image, self.rect)
+            else: 
+                self.image = pygame.image.load("BG/fireball_L.png")
+                self.image = pygame.transform.scale(self.image, (50, 50))
+                screen.blit(self.image, self.rect)
+            if self.direction == "RIGHT":
+                self.rect.move_ip(12, 0)
+            else:
+                self.rect.move_ip(-12, 0)
+        else:
+            self.kill()
+            player1.magic_cooldown = 1
+            player1.attacking = False 
 
 background = Background()
 
@@ -488,8 +714,13 @@ stage_display = StageDisplay()
 status_bar = StatusBar()
 
 items = pygame.sprite.Group()
+button = PButton()
+cursor = Cursor()
+Fireballs = pygame.sprite.Group()
 
 while True:
+    player1.gravity_check()
+    mouse = pygame.mouse.get_pos()
     for event in pygame.event.get():
         # close the game with close button
         if event.type == QUIT:
@@ -498,7 +729,11 @@ while True:
 
         #For events that occur upon clicing the mouse
         if event.type == pygame.MOUSEBUTTONDOWN:
-            pass
+            if 620 <= mouse[0] <= 670 and 300 <= mouse[1] <= 345:
+                if button.imgdisp == 1:
+                    cursor.pause()
+                elif button.imgdisp == 0:
+                    handler.home()
 
         if event.type == hit_cooldown:
             player1.cooldown = False
@@ -510,9 +745,14 @@ while True:
                 Enemies.add(enemy)
                 print("generate enemy")
                 handler.enemy_count += 1
-        
+        if event.type == handler.enemy_generation2:
+            if handler.enemy_count < handler.stage_enemies[handler.stage - 1]:
+                enemy = Enemy2()
+                Enemies.add(enemy)
+                handler.enemy_count += 1
+
         #Event handling for a range of different key presses
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN and cursor.wait == 0:
             if event.key == pygame.K_SPACE:
                 player1.jump()
             if event.key == pygame.K_RETURN:
@@ -526,6 +766,12 @@ while True:
                     stage_display = StageDisplay()
                     stage_display.display = True
                     handler.next_stage()
+            if event.key == pygame.K_m and player1.magic_cooldown == 1:
+                if player1.mana >=6:
+                    player1.mana -= 6
+                    player1.attacking = True
+                    fireball = FireBall()
+                    Fireballs.add(fireball)
         
     #Player related functions
     player1.update()
@@ -538,8 +784,13 @@ while True:
     #Display and Background related functions
     background.render()
     ground.render()
+    button.render(button.imgdisp)
+    cursor.hover()
 
     castle.update()
+
+    for ball in Fireballs:
+        ball.fire()
     #enemy
     for entity in Enemies:
         entity.update()
@@ -550,6 +801,7 @@ while True:
     for item in items:
         item.render()
         item.update()
+    
 
     #render stage display
 
